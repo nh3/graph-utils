@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.Map;
-//import org.apache.commons.cli.*;
 import org.docopt.Docopt;
 import org.gephi.appearance.api.*;
 import org.gephi.appearance.plugin.*;
