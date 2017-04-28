@@ -28,5 +28,5 @@ $(jars): %.jar: %.manifest %.class
 	jar cvfm $@ $^
 
 $(targets): %: %.jar
-	echo 'java -jar `dirname $$0`/'$< > $@
+	echo 'java -jar `dirname $$0`/'$<' $$*' > $@
 	chmod +x $@
