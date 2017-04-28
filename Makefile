@@ -12,6 +12,8 @@ classes = $(addsuffix .class,$(targets))
 manifests = $(addsuffix .manifest,$(targets))
 jars = $(addsuffix .jar,$(targets))
 
+maxMem := 16g
+
 all: $(targets)
 
 clean:
@@ -28,5 +30,5 @@ $(jars): %.jar: %.manifest %.class
 	jar cvfm $@ $^
 
 $(targets): %: %.jar
-	echo 'java -jar `dirname $$0`/'$<' $$*' > $@
+	echo 'java -Xmx$(maxMem) -jar `dirname $$0`/'$<' $$*' > $@
 	chmod +x $@
