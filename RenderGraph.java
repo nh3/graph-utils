@@ -28,9 +28,9 @@ public class RenderGraph {
         + "  -o <str>       output prefix [default: out]\n"
         + "layout options:\n"
         + "  -t <int>       layout running time in seconds [default: 30]\n"
-        + "  --color <str>  comma separated list of colors\n"
         + "paint options:\n"
-        + "  -c <str>       column name that defines color-coding [default: color]\n\n";
+        + "  -c <str>       column name that defines color-coding [default: color]\n"
+        + "  --color <str>  comma separated list of colors\n\n";
 
     public static void main(String[] args) {
         Map<String, Object> opts = new Docopt(doc).parse(args);
