@@ -1,0 +1,3 @@
+[submodule "docopt.java"]
+	path = docopt.java
+	url = https://github.com/docopt/docopt.java.git
