@@ -15,7 +15,7 @@ jars = $(addsuffix .jar,$(targets))
 all: $(targets)
 
 clean:
-	-rm -f $(jars) $(manifests) $(classes)
+	-rm -f $(manifests) $(classes)
 
 $(classes): %.class: %.java
 	javac -cp $(classPath):. $<
