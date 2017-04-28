@@ -1,2 +1,5 @@
 # Compiled java classes
 *.class
+
+# test output
+test/output*
