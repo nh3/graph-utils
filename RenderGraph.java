@@ -25,12 +25,13 @@ public class RenderGraph {
     private static final String doc =
           "Usage: RenderGraph (layout|paint|both) [options] <graph>\n\n"
         + "Common Options:\n"
-        + "  -o <str>       output prefix [default: out]\n"
+        + "  -o <str>           output prefix [default: out]\n"
         + "layout options:\n"
-        + "  -t <int>       layout running time in seconds [default: 30]\n"
+        + "  --thread <int>     number of thread [default: 8]\n"
+        + "  --time <int>       layout running time in seconds [default: 30]\n"
         + "paint options:\n"
-        + "  -c <str>       column name that defines color-coding [default: color]\n"
-        + "  --color <str>  comma separated list of colors\n\n";
+        + "  -c <str>           column name that defines color-coding [default: color]\n"
+        + "  --color <str>      comma separated list of colors\n\n";
 
     public static void main(String[] args) {
         Map<String, Object> opts = new Docopt(doc).parse(args);
@@ -41,7 +42,8 @@ public class RenderGraph {
         boolean runPaint = (boolean)opts.get("paint");
         boolean runBoth = (boolean)opts.get("both");
         String outputPrefix = (String)opts.get("-o");
-        int runLayoutSeconds = Integer.parseInt((String)opts.get("-t"));
+        int runLayoutSeconds = Integer.parseInt((String)opts.get("--time"));
+        int runLayoutThread = Integer.parseInt((String)opts.get("--thread"));
         String colorColumn = (String)opts.get("-c");
         String outputGraph = (String)outputPrefix + ".gexf";
         String outputPdf = (String)outputPrefix + ".pdf";
@@ -75,6 +77,7 @@ public class RenderGraph {
             autoLayout.setGraphModel(graphModel);
             OpenOrdLayout firstLayout = new OpenOrdLayout(null);
             firstLayout.setEdgeCut(0.0f);
+            firstLayout.setNumThreads(runLayoutThread);
             ForceAtlasLayout secondLayout = new ForceAtlasLayout(null);
             AutoLayout.DynamicProperty adjustSizesProperty = AutoLayout.createDynamicProperty("forceAtlas.adjustSizes.name", Boolean.TRUE, 0.7f);
             autoLayout.addLayout(firstLayout, 0.25f);
@@ -106,10 +109,15 @@ public class RenderGraph {
             }
             partition.setColors(palette.getColors());
             appearanceController.transform(attributePartition);
+        } else {
+            Function simpleNodeColor = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, UniqueElementColorTransformer.class);
+            UniqueElementColorTransformer nodeColorTransformer = (UniqueElementColorTransformer) simpleNodeColor.getTransformer();
+            nodeColorTransformer.setColor(Color.GRAY);
+            appearanceController.transform(simpleNodeColor);
         }
 
         previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, new Float(0.1f));
+        previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 1);
         previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 4));
