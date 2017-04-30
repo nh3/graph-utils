@@ -27,8 +27,8 @@ public class RenderGraph {
         + "Common Options:\n"
         + "  -o <str>           output prefix [default: out]\n"
         + "layout options:\n"
-        + "  --thread <int>     number of thread [default: 8]\n"
-        + "  --time <int>       layout running time in seconds [default: 30]\n"
+        + "  --auto             automatic layout running\n"
+        + "  --time <int>       layout running time in iterations or seconds (with --auto) [default: 50]\n"
         + "paint options:\n"
         + "  -c <str>           column name that defines color-coding [default: color]\n"
         + "  --color <str>      comma separated list of colors\n\n";
@@ -42,8 +42,8 @@ public class RenderGraph {
         boolean runPaint = (boolean)opts.get("paint");
         boolean runBoth = (boolean)opts.get("both");
         String outputPrefix = (String)opts.get("-o");
-        int runLayoutSeconds = Integer.parseInt((String)opts.get("--time"));
-        int runLayoutThread = Integer.parseInt((String)opts.get("--thread"));
+        boolean runAutoLayout = (boolean)opts.get("--auto");
+        int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
         String colorColumn = (String)opts.get("-c");
         String outputGraph = (String)outputPrefix + ".gexf";
         String outputPdf = (String)outputPrefix + ".pdf";
@@ -73,16 +73,43 @@ public class RenderGraph {
         UndirectedGraph graph = graphModel.getUndirectedGraph();
 
         if (runLayout || runBoth) {
-            AutoLayout autoLayout = new AutoLayout(runLayoutSeconds, TimeUnit.SECONDS);
-            autoLayout.setGraphModel(graphModel);
             OpenOrdLayout firstLayout = new OpenOrdLayout(null);
-            firstLayout.setEdgeCut(0.0f);
-            firstLayout.setNumThreads(runLayoutThread);
+            firstLayout.resetPropertiesValues();
+            firstLayout.setEdgeCut(0.1f);
+            firstLayout.setNumIterations(750);
+            firstLayout.setLiquidStage(25);
+            firstLayout.setExpansionStage(25);
+            firstLayout.setCooldownStage(25);
+            firstLayout.setCrunchStage(10);
+            firstLayout.setSimmerStage(15);
+
             ForceAtlasLayout secondLayout = new ForceAtlasLayout(null);
-            AutoLayout.DynamicProperty adjustSizesProperty = AutoLayout.createDynamicProperty("forceAtlas.adjustSizes.name", Boolean.TRUE, 0.7f);
-            autoLayout.addLayout(firstLayout, 0.25f);
-            autoLayout.addLayout(secondLayout, 0.75f, new AutoLayout.DynamicProperty[]{adjustSizesProperty});
-            autoLayout.execute();
+            secondLayout.resetPropertiesValues();
+            secondLayout.setAdjustSizes(false);
+
+            if (runAutoLayout) {
+                AutoLayout autoLayout = new AutoLayout(runLayoutTime, TimeUnit.SECONDS);
+                autoLayout.setGraphModel(graphModel);
+                AutoLayout.DynamicProperty adjustSizesProperty = AutoLayout.createDynamicProperty("forceAtlas.adjustSizes.name", Boolean.TRUE, 0.7f);
+                autoLayout.addLayout(firstLayout, 0.25f);
+                autoLayout.addLayout(secondLayout, 0.75f, new AutoLayout.DynamicProperty[]{adjustSizesProperty});
+                autoLayout.execute();
+            } else {
+                firstLayout.setGraphModel(graphModel);
+                firstLayout.initAlgo();
+                while (firstLayout.canAlgo()) {
+                    firstLayout.goAlgo();
+                }
+                firstLayout.endAlgo();
+
+                secondLayout.setGraphModel(graphModel);
+                secondLayout.initAlgo();
+                for (int i=0; i<runLayoutTime && secondLayout.canAlgo(); i++) {
+                    if (i>=runLayoutTime-10) { secondLayout.setAdjustSizes(true); }
+                    secondLayout.goAlgo();
+                }
+                secondLayout.endAlgo();
+            }
         }
 
         Function degreeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
@@ -109,18 +136,13 @@ public class RenderGraph {
             }
             partition.setColors(palette.getColors());
             appearanceController.transform(attributePartition);
-        } else {
-            Function simpleNodeColor = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, UniqueElementColorTransformer.class);
-            UniqueElementColorTransformer nodeColorTransformer = (UniqueElementColorTransformer) simpleNodeColor.getTransformer();
-            nodeColorTransformer.setColor(Color.GRAY);
-            appearanceController.transform(simpleNodeColor);
         }
 
         previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
         previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 1);
         previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 4));
+        previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 2));
         previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
         previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 90);
