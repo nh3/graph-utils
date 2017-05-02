@@ -23,7 +23,7 @@ import org.openide.util.Lookup;
 
 public class RenderGraph {
     private static final String doc =
-          "Usage: RenderGraph (layout|paint|both) [options] <graph>\n\n"
+          "Usage: RenderGraph (layout|paint|both|none) [options] <graph>\n\n"
         + "Common Options:\n"
         + "  -o <str>           output graph [default: none]\n"
         + "  -p <str>           output pdf [default: none]\n"
@@ -43,6 +43,7 @@ public class RenderGraph {
         boolean runLayout = (boolean)opts.get("layout");
         boolean runPaint = (boolean)opts.get("paint");
         boolean runBoth = (boolean)opts.get("both");
+        boolean runNone = (boolean)opts.get("none");
         String outputGraph = (String)opts.get("-o");
         String outputPdf = (String)opts.get("-p");
         boolean showLabel = (boolean)opts.get("--show-label");
@@ -114,11 +115,13 @@ public class RenderGraph {
             }
         }
 
-        Function degreeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
-        RankingNodeSizeTransformer degreeTransformer = (RankingNodeSizeTransformer) degreeRanking.getTransformer();
-        degreeTransformer.setMinSize(10);
-        degreeTransformer.setMaxSize(50);
-        appearanceController.transform(degreeRanking);
+        if (!runNone) {
+            Function degreeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
+            RankingNodeSizeTransformer degreeTransformer = (RankingNodeSizeTransformer) degreeRanking.getTransformer();
+            degreeTransformer.setMinSize(10);
+            degreeTransformer.setMaxSize(50);
+            appearanceController.transform(degreeRanking);
+        }
 
         if (runPaint || runBoth) {
             Column column = graphModel.getNodeTable().getColumn(colorColumn);
@@ -140,24 +143,25 @@ public class RenderGraph {
             appearanceController.transform(attributePartition);
         }
 
-        previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.1f);
-        if (showLabel) {
-            previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
-            previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
-            previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 2));
+        if (!runNone) {
+            previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.1f);
+            if (showLabel) {
+                previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
+                previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
+                previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 2));
+            }
+            previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
+            previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
+            previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 90);
         }
-        previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
-        previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
-        previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 90);
 
         try {
             if (!outputGraph.equals("none")) { exportController.exportFile(new File(outputGraph)); }
-            if (!outputPdf.equals("none")) { exportController.exportFile(new File(outputPdf)); }
+            if (!runNone && !outputPdf.equals("none")) { exportController.exportFile(new File(outputPdf)); }
         } catch (IOException ex) {
             ex.printStackTrace();
             return;
         }
     }
-
 }
