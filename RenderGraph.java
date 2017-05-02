@@ -25,7 +25,9 @@ public class RenderGraph {
     private static final String doc =
           "Usage: RenderGraph (layout|paint|both) [options] <graph>\n\n"
         + "Common Options:\n"
-        + "  -o <str>           output prefix [default: out]\n"
+        + "  -o <str>           output graph [default: none]\n"
+        + "  -p <str>           output pdf [default: none]\n"
+        + "  --show-label       show node label\n"
         + "layout options:\n"
         + "  --auto             automatic layout running\n"
         + "  --time <int>       layout running time in iterations or seconds (with --auto) [default: 50]\n"
@@ -41,12 +43,12 @@ public class RenderGraph {
         boolean runLayout = (boolean)opts.get("layout");
         boolean runPaint = (boolean)opts.get("paint");
         boolean runBoth = (boolean)opts.get("both");
-        String outputPrefix = (String)opts.get("-o");
+        String outputGraph = (String)opts.get("-o");
+        String outputPdf = (String)opts.get("-p");
+        boolean showLabel = (boolean)opts.get("--show-label");
         boolean runAutoLayout = (boolean)opts.get("--auto");
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
         String colorColumn = (String)opts.get("-c");
-        String outputGraph = (String)outputPrefix + ".gexf";
-        String outputPdf = (String)outputPrefix + ".pdf";
 
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
         pc.newProject();
@@ -139,17 +141,19 @@ public class RenderGraph {
         }
 
         previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 1);
-        previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
-        previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 2));
+        previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.1f);
+        if (showLabel) {
+            previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_FONT, new Font("SANS_SERIF", 0, 2));
+        }
         previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
         previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 90);
 
         try {
-            exportController.exportFile(new File(outputGraph));
-            exportController.exportFile(new File(outputPdf));
+            if (!outputGraph.equals("none")) { exportController.exportFile(new File(outputGraph)); }
+            if (!outputPdf.equals("none")) { exportController.exportFile(new File(outputPdf)); }
         } catch (IOException ex) {
             ex.printStackTrace();
             return;
