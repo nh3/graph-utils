@@ -78,21 +78,20 @@ def main(args):
     nodes = graph.find('default:nodes', xmlns)
     edges = graph.find('default:edges', xmlns)
 
+    node_dict = {node.attrib['id']:node.attrib['label'] for node in nodes.iterfind('default:node', xmlns)}
 
-    node_dict = {}
     for name in node_annot:
         attr = etree.SubElement(attributes, attr_tag,
                 {'id':name, 'title':name, 'type':node_ctypes[name]})
         logging.info(name)
         for node in nodes.iterfind('default:node', xmlns):
-            nid = node.attrib['id']
             label = node.attrib['label']
-            node_dict[nid] = label
             attvalues = node.find('default:attvalues', xmlns)
             if attvalues is None:
                 attvalues = etree.SubElement(node, attvs_tag)
             attv = etree.SubElement(attvalues, attv_tag,
                     {'for':name, 'value':str(node_annot[name][label])})
+
     for name in edge_annot:
         logging.info(name)
         for edge in edges.iterfind('default:edge', xmlns):
