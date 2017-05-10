@@ -89,6 +89,8 @@ def main(args):
             label = node.attrib['label']
             node_dict[nid] = label
             attvalues = node.find('default:attvalues', xmlns)
+            if attvalues is None:
+                attvalues = etree.SubElement(node, attvs_tag)
             attv = etree.SubElement(attvalues, attv_tag,
                     {'for':name, 'value':str(node_annot[name][label])})
     for name in edge_annot:
