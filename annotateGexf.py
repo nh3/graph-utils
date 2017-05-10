@@ -104,7 +104,7 @@ def main(args):
                 if attvalues is None:
                     attvalues = etree.SubElement(edge, attvs_tag)
                 attv = etree.SubElement(attvalues, attv_tag,
-                        {'for':eid, 'value':str(edge_annot[name][key])})
+                        {'for':name, 'value':str(edge_annot[name][key])})
 
     tree.write('/dev/stdout', xml_declaration=True)
 
