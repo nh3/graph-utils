@@ -22,6 +22,10 @@ import numpy as np
 import pandas as pd
 
 xmlns = {'default':'http://www.gexf.net/1.3', 'viz':'http://www.gexf.net/1.3/viz', 'xsi':'http://www.w3.org/2001/XMLSchema-instance'}
+attrs_tag = '{{{}}}attributes'.format(xmlns['default'])
+attr_tag = '{{{}}}attribute'.format(xmlns['default'])
+attvs_tag = '{{{}}}attvalues'.format(xmlns['default'])
+attv_tag = '{{{}}}attvalue'.format(xmlns['default'])
 
 def read_node_annotation(filename):
     if filename is None:
@@ -69,12 +73,11 @@ def main(args):
     root = tree.getroot()
     graph = root.find('default:graph', xmlns)
     attributes = graph.find('default:attributes', xmlns)
+    if attributes is None:
+        attributes = etree.SubElement(graph, attrs_tag)
     nodes = graph.find('default:nodes', xmlns)
     edges = graph.find('default:edges', xmlns)
 
-    attr_tag = '{{{}}}attribute'.format(xmlns['default'])
-    attvs_tag = '{{{}}}attvalues'.format(xmlns['default'])
-    attv_tag = '{{{}}}attvalue'.format(xmlns['default'])
 
     node_dict = {}
     for name in node_annot:
