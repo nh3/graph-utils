@@ -25,17 +25,17 @@ public class RenderGraph {
     private static final String doc =
           "Usage: RenderGraph (layout|paint|both|none) [options] <graph>\n\n"
         + "Common Options:\n"
-        + "  -o <str>           output graph [default: none]\n"
-        + "  -p <str>           output pdf [default: none]\n"
-        + "  --scale-size       scale node size by degree\n"
-        + "  --show-label       show node label\n"
+        + "  -o <str>               output graph [default: none]\n"
+        + "  -p <str>               output pdf [default: none]\n"
+        + "  --scale-size           scale node size by degree\n"
+        + "  --show-label           show node label\n"
         + "layout options:\n"
-        + "  --seed <int>       set random seed for layout [default: 0]\n"
-        + "  --auto             automatic layout running\n"
-        + "  --time <int>       layout running time in iterations or seconds (with --auto) [default: 50]\n"
+        + "  --seed <int>           random seed for OpenOrd layout [default: 0]\n"
+        + "  --time <int>           running iterations for Force-Atlas layout [default: 20]\n"
+        + "  --novlp-time <int>     running iterations for no-overlap adjustment (must not exceed --time) [default: 5]\n"
         + "paint options:\n"
-        + "  -c <str>           column name that defines color-coding [default: color]\n"
-        + "  --color <str>      comma separated list of colors\n\n";
+        + "  -c <str>               column name that defines color-coding [default: color]\n"
+        + "  --color <str>          comma separated list of colors\n\n";
 
     public static void main(String[] args) {
         Map<String, Object> opts = new Docopt(doc).parse(args);
@@ -51,8 +51,8 @@ public class RenderGraph {
         boolean scaleSize = (boolean)opts.get("--scale-size");
         boolean showLabel = (boolean)opts.get("--show-label");
         long runLayoutSeed = Long.parseLong((String)opts.get("--seed"));
-        boolean runAutoLayout = (boolean)opts.get("--auto");
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
+        int noOverlapTime = Integer.parseInt((String)opts.get("--novlp-time"));
         String colorColumn = (String)opts.get("-c");
 
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
@@ -95,29 +95,20 @@ public class RenderGraph {
             secondLayout.resetPropertiesValues();
             secondLayout.setAdjustSizes(false);
 
-            if (runAutoLayout) {
-                AutoLayout autoLayout = new AutoLayout(runLayoutTime, TimeUnit.SECONDS);
-                autoLayout.setGraphModel(graphModel);
-                AutoLayout.DynamicProperty adjustSizesProperty = AutoLayout.createDynamicProperty("forceAtlas.adjustSizes.name", Boolean.TRUE, 0.7f);
-                autoLayout.addLayout(firstLayout, 0.25f);
-                autoLayout.addLayout(secondLayout, 0.75f, new AutoLayout.DynamicProperty[]{adjustSizesProperty});
-                autoLayout.execute();
-            } else {
-                firstLayout.setGraphModel(graphModel);
-                firstLayout.initAlgo();
-                while (firstLayout.canAlgo()) {
-                    firstLayout.goAlgo();
-                }
-                firstLayout.endAlgo();
-
-                secondLayout.setGraphModel(graphModel);
-                secondLayout.initAlgo();
-                for (int i=0; i<runLayoutTime && secondLayout.canAlgo(); i++) {
-                    if (i>=runLayoutTime-3) { secondLayout.setAdjustSizes(true); }
-                    secondLayout.goAlgo();
-                }
-                secondLayout.endAlgo();
+            firstLayout.setGraphModel(graphModel);
+            firstLayout.initAlgo();
+            while (firstLayout.canAlgo()) {
+                firstLayout.goAlgo();
             }
+            firstLayout.endAlgo();
+
+            secondLayout.setGraphModel(graphModel);
+            secondLayout.initAlgo();
+            for (int i=0; i<runLayoutTime && secondLayout.canAlgo(); i++) {
+                if (i>=runLayoutTime-noOverlapTime) { secondLayout.setAdjustSizes(true); }
+                secondLayout.goAlgo();
+            }
+            secondLayout.endAlgo();
         }
 
         if (scaleSize) {
