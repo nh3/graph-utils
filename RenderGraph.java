@@ -108,7 +108,7 @@ public class RenderGraph {
                 secondLayout.setGraphModel(graphModel);
                 secondLayout.initAlgo();
                 for (int i=0; i<runLayoutTime && secondLayout.canAlgo(); i++) {
-                    if (i>=runLayoutTime-10) { secondLayout.setAdjustSizes(true); }
+                    if (i>=runLayoutTime-3) { secondLayout.setAdjustSizes(true); }
                     secondLayout.goAlgo();
                 }
                 secondLayout.endAlgo();
