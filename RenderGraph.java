@@ -27,8 +27,10 @@ public class RenderGraph {
         + "Common Options:\n"
         + "  -o <str>           output graph [default: none]\n"
         + "  -p <str>           output pdf [default: none]\n"
+        + "  --scale-size       scale node size by degree\n"
         + "  --show-label       show node label\n"
         + "layout options:\n"
+        + "  --seed <int>       set random seed for layout [default: 0]\n"
         + "  --auto             automatic layout running\n"
         + "  --time <int>       layout running time in iterations or seconds (with --auto) [default: 50]\n"
         + "paint options:\n"
@@ -46,7 +48,9 @@ public class RenderGraph {
         boolean runNone = (boolean)opts.get("none");
         String outputGraph = (String)opts.get("-o");
         String outputPdf = (String)opts.get("-p");
+        boolean scaleSize = (boolean)opts.get("--scale-size");
         boolean showLabel = (boolean)opts.get("--show-label");
+        int runLayoutSeed = Integer.parseInt((String)opts.get("--seed"));
         boolean runAutoLayout = (boolean)opts.get("--auto");
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
         String colorColumn = (String)opts.get("-c");
@@ -78,6 +82,7 @@ public class RenderGraph {
         if (runLayout || runBoth) {
             OpenOrdLayout firstLayout = new OpenOrdLayout(null);
             firstLayout.resetPropertiesValues();
+            firstLayout.setRandSeed(runLayoutSeed);
             firstLayout.setEdgeCut(0.1f);
             firstLayout.setNumIterations(750);
             firstLayout.setLiquidStage(25);
@@ -115,7 +120,7 @@ public class RenderGraph {
             }
         }
 
-        if (!runNone) {
+        if (scaleSize) {
             Function degreeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
             RankingNodeSizeTransformer degreeTransformer = (RankingNodeSizeTransformer) degreeRanking.getTransformer();
             degreeTransformer.setMinSize(10);
