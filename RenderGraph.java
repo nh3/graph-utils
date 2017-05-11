@@ -50,7 +50,7 @@ public class RenderGraph {
         String outputPdf = (String)opts.get("-p");
         boolean scaleSize = (boolean)opts.get("--scale-size");
         boolean showLabel = (boolean)opts.get("--show-label");
-        int runLayoutSeed = Integer.parseInt((String)opts.get("--seed"));
+        long runLayoutSeed = Long.parseLong((String)opts.get("--seed"));
         boolean runAutoLayout = (boolean)opts.get("--auto");
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
         String colorColumn = (String)opts.get("-c");
