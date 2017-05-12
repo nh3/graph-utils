@@ -72,11 +72,15 @@ def main(args):
     tree = etree.parse(args['i'])
     root = tree.getroot()
     graph = root.find('default:graph', xmlns)
-    attributes = graph.find('default:attributes', xmlns)
-    if attributes is None:
-        attributes = etree.SubElement(graph, attrs_tag, {'class':'node','mode':'static'})
     nodes = graph.find('default:nodes', xmlns)
     edges = graph.find('default:edges', xmlns)
+    attributes = graph.find('default:attributes', xmlns)
+    if attributes is None:
+        graph.remove(nodes)
+        graph.remove(edges)
+        attributes = etree.SubElement(graph, attrs_tag, {'class':'node','mode':'static'})
+        graph.append(nodes)
+        graph.append(edges)
 
     node_dict = {node.attrib['id']:node.attrib['label'] for node in nodes.iterfind('default:node', xmlns)}
 
