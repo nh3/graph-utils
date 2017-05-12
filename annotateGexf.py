@@ -74,7 +74,7 @@ def main(args):
     graph = root.find('default:graph', xmlns)
     attributes = graph.find('default:attributes', xmlns)
     if attributes is None:
-        attributes = etree.SubElement(graph, attrs_tag)
+        attributes = etree.SubElement(graph, attrs_tag, {'class':'node','mode':'static'})
     nodes = graph.find('default:nodes', xmlns)
     edges = graph.find('default:edges', xmlns)
 
