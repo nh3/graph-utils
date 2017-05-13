@@ -123,17 +123,20 @@ public class RenderGraph {
             Column column = graphModel.getNodeTable().getColumn(colorColumn);
             Function attributePartition = appearanceModel.getNodeFunction(graph, column, PartitionElementColorTransformer.class);
             Partition partition = ((PartitionFunction) attributePartition).getPartition();
+            int nValues = partition.size();
+            System.err.println(partition.getValues());
             Palette palette;
             try {
                 String[] names = ((String)opts.get("--color")).split(",");
-                Color[] colors = new Color[names.length];
-                for (int i=0; i<names.length; i++) {
+                Color[] colors = new Color[nValues];
+                for (int i=0; i<nValues; i++) {
                     colors[i] = (Color)Color.class.getField(names[i]).get(null);
                 }
                 palette = new Palette(colors);
             } catch (Exception ex) {
+                System.err.println(ex);
                 System.err.println("Error using specified colors, revert to random palette");
-                palette = PaletteManager.getInstance().generatePalette(partition.size());
+                palette = PaletteManager.getInstance().generatePalette(nValues);
             }
             partition.setColors(palette.getColors());
             appearanceController.transform(attributePartition);
@@ -141,7 +144,7 @@ public class RenderGraph {
 
         if (!runNone) {
             previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
-            previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.1f);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0f);
             if (showLabel) {
                 previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
                 previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
