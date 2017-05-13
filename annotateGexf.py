@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 '''
-Usage: annotate_gexf.py -i <gexf> [-n <node_annot>] [-e <edge_annot>]
+Usage: annotate_gexf.py -i <gexf> [-n <node_annot>] [-c <color_attr>] [-e <edge_annot>] [-w <weight_attr>]
 
 Options:
     -i <gexf>           input, read from stdin if omitted
     -n <node_annot>     node annotation
+    -c <color_attr>     color attribute
     -e <edge_annot>     edge annotation
+    -w <weight_attr>    weight attribute
 '''
 
 from __future__ import print_function
@@ -104,11 +106,17 @@ def main(args):
             tgt = edge.attrib['target']
             key = (str(node_dict[src]),str(node_dict[tgt]))
             if key in edge_annot[name]:
+                value = str(edge_annot[name][key])
+            else:
+                continue
+            if args['w'] is not None and name == args['w']:
+                edge.set('weight', value)
+            else:
                 attvalues = edge.find('default:attvalues', xmlns)
                 if attvalues is None:
                     attvalues = etree.SubElement(edge, attvs_tag)
                 attv = etree.SubElement(attvalues, attv_tag,
-                        {'for':name, 'value':str(edge_annot[name][key])})
+                        {'for':name, 'value':value})
 
     tree.write('/dev/stdout', xml_declaration=True)
 

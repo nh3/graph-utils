@@ -34,7 +34,8 @@ public class RenderGraph {
         + "  --time <int>           running iterations for Force-Atlas layout [default: 20]\n"
         + "  --novlp-time <int>     running iterations for no-overlap adjustment (must not exceed --time) [default: 5]\n"
         + "paint options:\n"
-        + "  -c <str>               column name that defines color-coding [default: color]\n"
+        + "  -c <str>               attribute name that defines node color-coding [default: color]\n"
+        + "  -w <str>               attribute name that defines edge color-ranking [default: weight]\n"
         + "  --color <str>          comma separated list of colors\n\n";
 
     public static void main(String[] args) {
@@ -54,6 +55,7 @@ public class RenderGraph {
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
         int noOverlapTime = Integer.parseInt((String)opts.get("--novlp-time"));
         String colorColumn = (String)opts.get("-c");
+        String weightColumn = (String)opts.get("-w");
 
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
         pc.newProject();
@@ -128,11 +130,11 @@ public class RenderGraph {
             Palette palette;
             try {
                 String[] names = ((String)opts.get("--color")).split(",");
-                Color[] colors = new Color[nValues];
+                Color[] nodeColors = new Color[nValues];
                 for (int i=0; i<nValues; i++) {
-                    colors[i] = (Color)Color.class.getField(names[i]).get(null);
+                    nodeColors[i] = (Color)Color.class.getField(names[i]).get(null);
                 }
-                palette = new Palette(colors);
+                palette = new Palette(nodeColors);
             } catch (Exception ex) {
                 System.err.println(ex);
                 System.err.println("Error using specified colors, revert to random palette");
@@ -140,6 +142,15 @@ public class RenderGraph {
             }
             partition.setColors(palette.getColors());
             appearanceController.transform(attributePartition);
+
+            column = graphModel.getEdgeTable().getColumn(weightColumn);
+            Function edgeAttributeRanking = appearanceModel.getEdgeFunction(graph, column, RankingElementColorTransformer.class);
+            RankingElementColorTransformer edgeAttributeTransformer = (RankingElementColorTransformer) edgeAttributeRanking.getTransformer();
+            Color[] edgeColors = new Color[2];
+            edgeColors[0] = new Color(0.25f,0.25f,0.25f);
+            edgeColors[1] = new Color(0.75f,0.75f,0.75f);
+            edgeAttributeTransformer.setColors(edgeColors);
+            appearanceController.transform(edgeAttributeRanking);
         }
 
         if (!runNone) {
