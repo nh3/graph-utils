@@ -28,6 +28,7 @@ attrs_tag = '{{{}}}attributes'.format(xmlns['default'])
 attr_tag = '{{{}}}attribute'.format(xmlns['default'])
 attvs_tag = '{{{}}}attvalues'.format(xmlns['default'])
 attv_tag = '{{{}}}attvalue'.format(xmlns['default'])
+color_tag = '{{{}}}color'.format(xmlns['viz'])
 
 def read_node_annotation(filename):
     if filename is None:
@@ -76,32 +77,51 @@ def main(args):
     graph = root.find('default:graph', xmlns)
     nodes = graph.find('default:nodes', xmlns)
     edges = graph.find('default:edges', xmlns)
-    attributes = graph.find('default:attributes', xmlns)
-    if attributes is None:
-        graph.remove(nodes)
-        graph.remove(edges)
-        attributes = etree.SubElement(graph, attrs_tag, {'class':'node','mode':'static'})
-        graph.append(nodes)
-        graph.append(edges)
+    graph.remove(nodes)
+    graph.remove(edges)
+    attributes = graph.findall('default:attributes', xmlns)
+    attr_classes = [x.attrib['class'] for x in attributes]
+    if not 'node' in attr_classes:
+        node_attributes = etree.SubElement(graph, attrs_tag, {'class':'node','mode':'static'})
+    else:
+        node_attributes = attributes[attr_classes.index('node')]
+    if not 'edge' in attr_classes:
+        edge_attributes = etree.SubElement(graph, attrs_tag, {'class':'edge','mode':'static'})
+    else:
+        edge_attributes = attributes[attr_classes.index('edge')]
+    graph.append(nodes)
+    graph.append(edges)
 
     node_dict = {node.attrib['id']:node.attrib['label'] for node in nodes.iterfind('default:node', xmlns)}
 
     for name in node_annot:
-        attr = etree.SubElement(attributes, attr_tag,
+        attr = etree.SubElement(node_attributes, attr_tag,
                 {'id':name, 'title':name, 'type':node_ctypes[name]})
         logging.info(name)
         for node in nodes.iterfind('default:node', xmlns):
             label = node.attrib['label']
-            attvalues = node.find('default:attvalues', xmlns)
-            if attvalues is None:
-                attvalues = etree.SubElement(node, attvs_tag)
-            attv = etree.SubElement(attvalues, attv_tag,
-                    {'for':name, 'value':str(node_annot[name][label])})
+            if label in node_annot[name]:
+                value = str(node_annot[name][label])
+            else:
+                continue
+            if args['c'] is not None and name == args['c']:
+                r,g,b,a = value.split(',')
+                viz_color = node.find('viz:color', xmlns)
+                if viz_color is not None:
+                    node.remove(viz_color)
+                viz_color = etree.SubElement(node, color_tag, {'r':r,'g':g,'b':b,'a':a})
+            else:
+                attvalues = node.find('default:attvalues', xmlns)
+                if attvalues is None:
+                    attvalues = etree.SubElement(node, attvs_tag)
+                attv = etree.SubElement(attvalues, attv_tag,
+                        {'for':name, 'value':value})
 
     for name in edge_annot:
+        attr = etree.SubElement(edge_attributes, attr_tag,
+                {'id':name, 'title':name, 'type':node_ctypes[name]})
         logging.info(name)
         for edge in edges.iterfind('default:edge', xmlns):
-            eid = edge.attrib['id']
             src = edge.attrib['source']
             tgt = edge.attrib['target']
             key = (str(node_dict[src]),str(node_dict[tgt]))
