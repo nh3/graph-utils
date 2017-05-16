@@ -27,7 +27,7 @@ public class RenderGraph {
         + "Common Options:\n"
         + "  -o <str>               output graph [default: none]\n"
         + "  -p <str>               output pdf [default: none]\n"
-        + "  --scale-size           scale node size by degree\n"
+        + "  -s <str>               attribute name that define node size, use degree if specified but not found\n"
         + "  --show-label           show node label\n"
         + "layout options:\n"
         + "  --seed <int>           random seed for OpenOrd layout [default: 0]\n"
@@ -49,7 +49,7 @@ public class RenderGraph {
         boolean runNone = (boolean)opts.get("none");
         String outputGraph = (String)opts.get("-o");
         String outputPdf = (String)opts.get("-p");
-        boolean scaleSize = (boolean)opts.get("--scale-size");
+        String scaleSize = (String)opts.get("-s");
         boolean showLabel = (boolean)opts.get("--show-label");
         long runLayoutSeed = Long.parseLong((String)opts.get("--seed"));
         int runLayoutTime = Integer.parseInt((String)opts.get("--time"));
@@ -81,6 +81,20 @@ public class RenderGraph {
         importController.process(container, new DefaultProcessor(), workspace);
         UndirectedGraph graph = graphModel.getUndirectedGraph();
 
+        if (scaleSize != null) {
+            Function sizeRanking;
+            Column columnS = graphModel.getNodeTable().getColumn(scaleSize);
+            if (columnS != null) {
+                sizeRanking = appearanceModel.getNodeFunction(graph, columnS, RankingNodeSizeTransformer.class);
+            } else {
+                sizeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
+            }
+            RankingNodeSizeTransformer sizeTransformer = (RankingNodeSizeTransformer) sizeRanking.getTransformer();
+            sizeTransformer.setMinSize(10);
+            sizeTransformer.setMaxSize(50);
+            appearanceController.transform(sizeRanking);
+        }
+
         if (runLayout || runBoth) {
             OpenOrdLayout firstLayout = new OpenOrdLayout(null);
             firstLayout.resetPropertiesValues();
@@ -111,14 +125,6 @@ public class RenderGraph {
                 secondLayout.goAlgo();
             }
             secondLayout.endAlgo();
-        }
-
-        if (scaleSize) {
-            Function degreeRanking = appearanceModel.getNodeFunction(graph, AppearanceModel.GraphFunction.NODE_DEGREE, RankingNodeSizeTransformer.class);
-            RankingNodeSizeTransformer degreeTransformer = (RankingNodeSizeTransformer) degreeRanking.getTransformer();
-            degreeTransformer.setMinSize(10);
-            degreeTransformer.setMaxSize(50);
-            appearanceController.transform(degreeRanking);
         }
 
         if (runPaint || runBoth) {
@@ -158,7 +164,7 @@ public class RenderGraph {
         }
 
         if (!runNone) {
-            previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 90);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 75);
             previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0f);
             if (showLabel) {
                 previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
@@ -167,7 +173,7 @@ public class RenderGraph {
             }
             previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
             previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
-            previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 90);
+            previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 75);
         }
 
         try {
