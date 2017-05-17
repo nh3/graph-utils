@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Usage: annotate_gexf.py -i <gexf> [-n <node_annot>] [-c <color_attr>] [-e <edge_annot>] [-w <weight_attr>]
+Usage: annotate_gexf.py -i <gexf> [-n <node_annot>] [-c <color_attr>] [-e <edge_annot>] [-w <weight_attr>] [--force-str]
 
 Options:
     -i <gexf>           input, read from stdin if omitted
@@ -8,6 +8,7 @@ Options:
     -c <color_attr>     color attribute
     -e <edge_annot>     edge annotation
     -w <weight_attr>    weight attribute
+    --force-str         force attributes to have string type
 '''
 
 from __future__ import print_function
@@ -30,17 +31,23 @@ attvs_tag = '{{{}}}attvalues'.format(xmlns['default'])
 attv_tag = '{{{}}}attvalue'.format(xmlns['default'])
 color_tag = '{{{}}}color'.format(xmlns['viz'])
 
-def read_node_annotation(filename):
+def read_node_annotation(filename, forcestr=False):
     if filename is None:
         return {},{}
-    dat = pd.read_table(filename)
+    if forcestr:
+        dat = pd.read_table(filename, dtype=str)
+    else:
+        dat = pd.read_table(filename)
     ctypes = get_column_type(dat)
     return dat.set_index('node').to_dict(),ctypes
 
-def read_edge_annotation(filename):
+def read_edge_annotation(filename, forcestr=False):
     if filename is None:
         return {},{}
-    dat = pd.read_table(filename)
+    if forcestr:
+        dat = pd.read_table(filename, dtype=str)
+    else:
+        dat = pd.read_table(filename)
     ctypes = get_column_type(dat)
     x = dat.set_index(['source','target']).to_dict()
     y = dat.set_index(['target','source']).to_dict()
@@ -62,9 +69,9 @@ def get_column_type(dat):
 
 def main(args):
     logging.info(args)
-    node_annot,node_ctypes = read_node_annotation(args['n'])
+    node_annot,node_ctypes = read_node_annotation(args['n'], forcestr=args['force-str'])
     logging.info(node_ctypes)
-    edge_annot,edge_ctypes = read_edge_annotation(args['e'])
+    edge_annot,edge_ctypes = read_edge_annotation(args['e'], forcestr=args['force-str'])
     logging.info(edge_ctypes)
 
     for prefix,uri in xmlns.items():
