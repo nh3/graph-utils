@@ -127,13 +127,13 @@ public class RenderGraph {
                 Function attributePartition = appearanceModel.getNodeFunction(graph, columnC, PartitionElementColorTransformer.class);
                 Partition partition = ((PartitionFunction) attributePartition).getPartition();
                 int nValues = partition.size();
-                System.err.println(partition.getValues());
                 Palette palette;
                 try {
                     String[] names = ((String)opts.get("--color")).split(",");
                     Color[] nodeColors = new Color[nValues];
-                    for (int i=0; i<nValues; i++) {
-                        nodeColors[i] = (Color)Color.class.getField(names[i]).get(null);
+                    for (int i=0,j=0,l=names.length; i<nValues; i++) {
+                        j = i % l;
+                        nodeColors[i] = (Color)Color.class.getField(names[j]).get(null);
                     }
                     palette = new Palette(nodeColors);
                 } catch (Exception ex) {
@@ -159,7 +159,7 @@ public class RenderGraph {
 
         if (!runNone) {
             previewModel.getProperties().putValue(PreviewProperty.NODE_OPACITY, 75);
-            previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.01f);
+            previewModel.getProperties().putValue(PreviewProperty.NODE_BORDER_WIDTH, 0.0f);
             if (showLabel) {
                 previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
                 previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.TRUE);
@@ -167,7 +167,7 @@ public class RenderGraph {
             }
             previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
             previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY));
-            previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 75);
+            previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 25);
         }
 
         try {
